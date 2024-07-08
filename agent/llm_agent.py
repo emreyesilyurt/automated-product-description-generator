@@ -37,7 +37,7 @@ class LLM_Agent:
 
     def query_llm(self, prompt):
         response = openai.Completion.create(
-            engine="gpt-4-turbo",
+            engine="gpt-3.5-turbo",
             prompt=prompt,
             max_tokens=150
         )

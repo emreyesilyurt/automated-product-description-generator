@@ -1,3 +1,5 @@
+import numpy as np
+
 class SimpleEnvironment:
     def reset(self):
         return [0]
