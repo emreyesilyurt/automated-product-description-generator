@@ -1,55 +1,70 @@
-# AI Product Description Generator
+# Automated Product Description Generator
 
-This repository demonstrates how to use an AI agent to automate the generation of product descriptions for technology gadgets using OpenAI's GPT-4-turbo. The AI agent repeatedly generates descriptions for a list of specified gadgets, ensuring efficiency and consistency without human intervention.
+This project is an automated product description generator using Huggingface models.
 
-## Features
+## Setup
 
-- Automated generation of product descriptions for technology gadgets
-- Efficient and consistent output using AI
-- No human intervention required
+### Prerequisites
 
-## Installation
+1. Python 3.12 or higher
+2. Virtualenv
+3. Git
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/your-username/ai-product-description-generator.git
-    cd ai-product-description-generator
+### Steps
+
+1. **Clone the repository**
+
+    ```sh
+    git clone <repository_url>
+    cd automated-product-description-generator
     ```
 
-2. Create a virtual environment and activate it:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate   # On Windows, use `venv\Scripts\activate`
+2. **Create a virtual environment**
+
+    ```sh
+    python3.12 -m venv .venv
+    source .venv/bin/activate
     ```
 
-3. Install the required libraries:
-    ```bash
+3. **Install dependencies**
+
+    ```sh
     pip install -r requirements.txt
     ```
 
-4. Set your OpenAI API key in the `main.py` file:
-    ```python
-    openai.api_key = 'YOUR_OPENAI_API_KEY'
+4. **Download the Huggingface model**
+
+    Ensure you have the model downloaded and placed in the appropriate directory.
+
+5. **Run the application**
+
+    ```sh
+    python initialize_requests.py
     ```
 
 ## Usage
 
-Run the script to generate product descriptions:
-```bash
-python main.py
-```
+The application runs a FastAPI server that generates product descriptions. 
 
-The script will generate descriptions for the specified gadgets and print them to the console.
+### Endpoints
 
-## Folder Structure
+- `GET /get_descriptions`: Retrieve generated product descriptions
+- `POST /generate_description/`: Generate a product description for a given product
 
-- `agent/`
-  - `llm_agent.py`: Contains the LLM_Agent class for interacting with GPT-4.
-  - `environment.py`: Contains the SimpleEnvironment class.
-- `utils/`
-  - `generate_description.py`: Contains utility functions for generating product descriptions.
-- `main.py`: Main script to run the AI agent.
+## Example
 
-## Contributing
+To generate a product description, send a POST request to `/generate_description/` with the product name.
 
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or additions.
+```sh
+curl -X POST "http://localhost:8001/generate_description/" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"product_name\": \"Apple iPhone 13\"}"
+Stopping the Server
+To stop the server, simply press CTRL+C in the terminal where the server is running.
+
+Troubleshooting
+If you encounter any issues, ensure that:
+
+All dependencies are correctly installed.
+The model is correctly placed and accessible.
+The server is running and accessible.
+License
+This project is licensed under the MIT License.
