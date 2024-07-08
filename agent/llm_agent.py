@@ -1,5 +1,6 @@
-import openai
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import numpy as np
+import torch
 
 class LLM_Agent:
     def __init__(self, actions):
@@ -9,6 +10,10 @@ class LLM_Agent:
         self.discount_factor = 0.99
         self.exploration_rate = 1.0
         self.exploration_decay = 0.995
+        
+        # Initialize GPT-Neo-2.7B model and tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained('EleutherAI/gpt-neo-2.7B')
+        self.model = AutoModelForCausalLM.from_pretrained('EleutherAI/gpt-neo-2.7B')
 
     def get_state(self, environment):
         return str(environment)
@@ -36,12 +41,13 @@ class LLM_Agent:
         self.q_table[state][action_index] += self.learning_rate * td_error
 
     def query_llm(self, prompt):
-        response = openai.Completion.create(
-            engine="gpt-3.5-turbo",
-            prompt=prompt,
-            max_tokens=150
-        )
-        return response.choices[0].text.strip()
+        inputs = self.tokenizer(prompt, return_tensors='pt')
+        # Ensure pad_token_id is set if not already
+        self.tokenizer.pad_token = self.tokenizer.eos_token
+        inputs['attention_mask'] = (inputs['input_ids'] != self.tokenizer.pad_token_id).long()
+        outputs = self.model.generate(inputs.input_ids, attention_mask=inputs['attention_mask'], max_length=150)
+        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return response
 
     def train(self, environment, episodes):
         for _ in range(episodes):
