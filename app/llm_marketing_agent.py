@@ -15,11 +15,7 @@ class LLM_Agent:
 
 class MarketingCheckerAgent:
     def __init__(self):
-        self.classifier = pipeline("text-classification", model="distilbert-base-uncased-finetuned-sst-2-english")
+        self.qualifiers = ["best", "greatest", "most amazing", "high performance", "top"]
 
     def check_for_marketing_qualifiers(self, description):
-        result = self.classifier(description)
-        for res in result:
-            if res['label'] == 'POSITIVE' and res['score'] > 0.8:
-                return True
-        return False
+        return any(qualifier in description.lower() for qualifier in self.qualifiers)
