@@ -1,42 +1,57 @@
-import subprocess
 import requests
+import json
+import subprocess
 import time
 
-def find_free_port():
-    import socket
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return s.getsockname()[1]
-
-def is_server_running(url):
+def is_server_running(url="http://localhost:8000/health"):
     try:
-        response = requests.get(f"{url}/health")
-        return response.status_code == 200
+        response = requests.get(url)
+        if response.status_code == 200:
+            return True
     except requests.ConnectionError:
         return False
+    return False
 
 def start_fastapi_server():
-    port = find_free_port()
-    server_url = f"http://localhost:{port}"
-    process = subprocess.Popen(["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", str(port)])
-    # Check every second up to 10 seconds if the server is running
-    for _ in range(10):
-        time.sleep(1)
-        if is_server_running(server_url):
-            print(f"Server is up and running on {server_url}!")
-            return process, server_url
-    print("Server failed to start in time.")
-    process.kill()  # Ensure no process hangs
-    return None, None
+    process = subprocess.Popen(["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"])
+    time.sleep(5)  # Wait for the server to start
+    return process
+
+def send_requests(file_path="products.json"):
+    with open(file_path, "r") as f:
+        products = json.load(f)["products"]
+
+    for product_name in products:
+        for _ in range(5):  # Retry mechanism
+            try:
+                response = requests.post("http://localhost:8000/generate_description/", json={"product_name": product_name})
+                if response.status_code == 200:
+                    print(f"Successfully processed {product_name}")
+                    break
+                else:
+                    print(f"Failed to process {product_name}")
+            except requests.ConnectionError:
+                print(f"Server not ready, retrying for {product_name}...")
+                time.sleep(2)
+        else:
+            print(f"Failed to process {product_name} after multiple attempts")
 
 def main():
-    server_process, server_url = start_fastapi_server()
-    if server_process:
-        print(f"Server started at {server_url}. Performing actions while the server is running.")
-        # Here, include any actions you'd like to perform while the server is up
+    if not is_server_running():
+        print("Starting FastAPI server...")
+        server_process = start_fastapi_server()
+    else:
+        server_process = None
 
-        # Cleanup when done
+    # Wait until the server is up and running
+    while not is_server_running():
+        print("Waiting for server to be ready...")
+        time.sleep(10)
+    print("Server is up and running!")
+
+    send_requests()
+
+    if server_process:
         print("Stopping FastAPI server...")
         server_process.terminate()
 

@@ -4,6 +4,9 @@ services:
   fastapi_app:
     build: .
     ports:
-      - "8000:80"
+      - "8000:8000"
     volumes:
-      - ./data:/app/data
+      - ./data:/tmp/data
+    environment:
+      - MODEL_NAME=EleutherAI/gpt-neo-125M
+      - CLASSIFIER_MODEL_NAME=distilbert-base-uncased-finetuned-sst-2-english

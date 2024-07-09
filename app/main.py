@@ -17,15 +17,17 @@ class ProductRequest(BaseModel):
 agent = LLM_Agent()
 checker_agent = MarketingCheckerAgent()
 
-#descriptions_dir = "/app/data"
-# Use a relative path or a path that you know is writable on your local system
-descriptions_dir = "data"  # This will create/use a directory in the current working directory of the project
-
+# Use /tmp/data for a writable directory
+descriptions_dir = "/tmp/data"
 descriptions_file = os.path.join(descriptions_dir, "product_descriptions.json")
-os.makedirs(descriptions_dir, exist_ok=True)
+logger.info(f"Checking if {descriptions_file} exists")
+if not os.path.exists(descriptions_dir):
+    os.makedirs(descriptions_dir, exist_ok=True)
+    logger.info(f"Created directory {descriptions_dir}")
 if not os.path.exists(descriptions_file):
     with open(descriptions_file, 'w') as f:
         json.dump({}, f)
+    logger.info("Created product_descriptions.json")
 
 @app.post("/generate_description/")
 async def generate_description(request: ProductRequest):
@@ -38,19 +40,48 @@ async def generate_description(request: ProductRequest):
         description = agent.query_llm(prompt)
         attempts += 1
 
-    result = {
-        "description": description,
-        "timestamp": datetime.now().isoformat(),
-        "warning": "Max attempts reached. The description may contain marketing qualifiers." if attempts == max_attempts else None
-    }
+    if attempts == max_attempts:
+        result = {
+            "description": description,
+            "timestamp": datetime.now().isoformat(),
+            "warning": "Max attempts reached. The description may contain marketing qualifiers."
+        }
+    else:
+        result = {
+            "description": description,
+            "timestamp": datetime.now().isoformat()
+        }
 
-    with open(descriptions_file, 'r+') as f:
-        descriptions = json.load(f)
-        descriptions[request.product_name] = result
-        f.seek(0)
+    # Ensure the descriptions file exists and is loaded correctly
+    logger.info(f"Ensuring {descriptions_file} exists")
+    if not os.path.exists(descriptions_file):
+        with open(descriptions_file, 'w') as f:
+            json.dump({}, f)
+        logger.info("Created product_descriptions.json inside request handler")
+
+    logger.info(f"Loading {descriptions_file}")
+    with open(descriptions_file, 'r') as f:
+        try:
+            descriptions = json.load(f)
+            logger.info("Loaded existing descriptions")
+        except json.JSONDecodeError:
+            descriptions = {}
+            logger.error("Failed to decode JSON from product_descriptions.json")
+
+    # Update descriptions with the new result
+    descriptions[request.product_name] = result
+
+    # Write back to the JSON file
+    logger.info(f"Writing to {descriptions_file}")
+    with open(descriptions_file, 'w') as f:
         json.dump(descriptions, f, indent=4)
+        logger.info(f"Updated product_descriptions.json with {request.product_name}")
 
     return result
+
+@app.get("/health")
+async def health_check():
+    return {"status": "OK"}
 
 @app.get("/get_descriptions/")
 async def get_descriptions():
@@ -62,6 +93,7 @@ async def get_descriptions():
 async def get_description(product_name: str):
     with open(descriptions_file, 'r') as f:
         descriptions = json.load(f)
+    
     if product_name in descriptions:
         return descriptions[product_name]
     else:
