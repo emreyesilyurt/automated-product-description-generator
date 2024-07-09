@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from app.llm_marketing_agent import LLM_Agent, MarketingCheckerAgent
+from app.llm_agent import LLM_Agent, MarketingCheckerAgent
 
 def generate_product_description(agent, product_name, attempt=1):
     prompt = f"Create a detailed, unbiased, and straightforward product description for the technology gadget {product_name}. Avoid using marketing language or qualifiers."

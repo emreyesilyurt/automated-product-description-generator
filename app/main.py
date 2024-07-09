@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from datetime import datetime
-from app.llm_marketing_agent import LLM_Agent, MarketingCheckerAgent
+from app.llm_agent import LLM_Agent, MarketingCheckerAgent
 import json
 import os
 import logging
@@ -17,8 +17,8 @@ class ProductRequest(BaseModel):
 agent = LLM_Agent()
 checker_agent = MarketingCheckerAgent()
 
-# Use /tmp/data for a writable directory
-descriptions_dir = "/tmp/data"
+# Use /tmp/outputs for a writable directory
+descriptions_dir = "/tmp/outputs"
 descriptions_file = os.path.join(descriptions_dir, "product_descriptions.json")
 logger.info(f"Checking if {descriptions_file} exists")
 if not os.path.exists(descriptions_dir):
