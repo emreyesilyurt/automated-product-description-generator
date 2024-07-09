@@ -1,4 +1,4 @@
-# Automated Product Description Generator
+# Product Overview Bot
 
 This project leverages language models to automatically generate product descriptions. It uses FastAPI for the API backend, Docker for containerization, and includes a script to manage the server and trigger processes.
 
