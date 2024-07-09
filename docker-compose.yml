@@ -6,4 +6,4 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - ./outputs:/outputs
+      - ./data:/app/data

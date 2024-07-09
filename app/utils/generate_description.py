@@ -1,42 +1,34 @@
-from fastapi import FastAPI, HTTPException, Request
 import json
-import os
+from datetime import datetime
+from app.llm_marketing_agent import LLM_Agent, MarketingCheckerAgent
 
-app = FastAPI()
+def generate_product_description(agent, product_name, attempt=1):
+    prompt = f"Create a detailed, unbiased, and straightforward product description for the technology gadget {product_name}. Avoid using marketing language or qualifiers."
+    description = agent.query_llm(prompt)
+    return description
 
-outputs_dir = os.path.join(os.getcwd(), "outputs")
-descriptions_file = os.path.join(outputs_dir, "product_descriptions.json")
+def automate_generation(agent, checker_agent, product_names):
+    descriptions = {}
+    max_attempts = 5
+    for i, product_name in enumerate(product_names):
+        print(f"\nIteration {i+1} for {product_name}:")
+        attempts = 0
+        llm_response = generate_product_description(agent, product_name)
+        
+        while checker_agent.check_for_marketing_qualifiers(llm_response) and attempts < max_attempts:
+            print(f"Marketing qualifier found in the description for {product_name}. Regenerating... Attempt {attempts+1}")
+            llm_response = generate_product_description(agent, product_name, attempts + 1)
+            attempts += 1
 
-@app.get("/get_descriptions")
-async def get_descriptions():
-    if not os.path.exists(descriptions_file):
-        raise HTTPException(status_code=404, detail="Descriptions file not found")
-    with open(descriptions_file, 'r') as f:
-        descriptions = json.load(f)
-    return descriptions
+        if attempts == max_attempts:
+            print(f"Max attempts reached for {product_name}. Proceeding with the best available description.")
 
-@app.post("/generate_description/")
-async def generate_description(request: Request):
-    data = await request.json()
-    product_name = data.get("product_name")
-    if not product_name:
-        raise HTTPException(status_code=400, detail="Product name is required")
+        print(f"LLM Response for {product_name}: {llm_response}")
+        descriptions[product_name] = {
+            "description": llm_response,
+            "timestamp": datetime.now().isoformat()
+        }
 
-    # Here, you should implement your logic to generate the product description.
-    description = f"Description for {product_name}"
-
-    # Load existing descriptions
-    if os.path.exists(descriptions_file):
-        with open(descriptions_file, 'r') as f:
-            descriptions = json.load(f)
-    else:
-        descriptions = {}
-
-    # Add new description
-    descriptions[product_name] = description
-
-    # Save updated descriptions
-    with open(descriptions_file, 'w') as f:
-        json.dump(descriptions, f)
-
-    return {"product_name": product_name, "description": description}
+    # Write the descriptions to a JSON file
+    with open('product_descriptions.json', 'w') as f:
+        json.dump(descriptions, f, indent=4)
