@@ -1,6 +1,6 @@
-# Product Overview Bot
+# Overviewer
 
-Product Overview Bot leverages AI to generate high-level product overviews. This tool uses language models to create concise, informative summaries of products, making it easier to understand key features and benefits quickly. Easily deployable with Docker and equipped with a FastAPI backend, Product Overview Bot ensures efficient and automated product overview generation.
+Overviewer leverages AI to generate high-level product overviews. This tool uses language models to create concise, informative summaries of products, making it easier to understand key features and benefits quickly. Easily deployable with Docker and equipped with a FastAPI backend, Product Overview Bot ensures efficient and automated product overview generation.
 
 ## Table of Contents
 
