@@ -57,8 +57,12 @@ Ensure you have the following installed:
     pip install -r requirements.txt
     ```
 
-4. Build and start the Docker containers:
+4. Build the Docker container:
 
+    ```bash
+    docker-compose build
+    ```
+5. Start the Docker container:
     ```bash
     docker-compose up -d
     ```
