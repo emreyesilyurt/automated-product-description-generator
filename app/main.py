@@ -17,13 +17,16 @@ class ProductRequest(BaseModel):
 agent = LLM_Agent()
 checker_agent = MarketingCheckerAgent()
 
-# Use /tmp/outputs for a writable directory
-descriptions_dir = "/tmp/outputs"
+# Use the 'outputs' directory for storing descriptions
+descriptions_dir = "outputs"
 descriptions_file = os.path.join(descriptions_dir, "product_descriptions.json")
-logger.info(f"Checking if {descriptions_file} exists")
+
+# Ensure the directory exists
 if not os.path.exists(descriptions_dir):
     os.makedirs(descriptions_dir, exist_ok=True)
     logger.info(f"Created directory {descriptions_dir}")
+
+# Ensure the file exists
 if not os.path.exists(descriptions_file):
     with open(descriptions_file, 'w') as f:
         json.dump({}, f)
@@ -32,13 +35,16 @@ if not os.path.exists(descriptions_file):
 @app.post("/generate_description/")
 async def generate_description(request: ProductRequest):
     prompt = f"Create a detailed, unbiased, and straightforward product description for the technology gadget {request.product_name}. Avoid using marketing language or qualifiers."
-    description = agent.query_llm(prompt)
+    
     attempts = 0
     max_attempts = 5
+    description = agent.query_llm(prompt)
+    logger.info(f"Initial generated description for {request.product_name}: {description}")
 
     while checker_agent.check_for_marketing_qualifiers(description) and attempts < max_attempts:
         description = agent.query_llm(prompt)
         attempts += 1
+        logger.info(f"Attempt {attempts} - Generated description for {request.product_name}: {description}")
 
     if attempts == max_attempts:
         result = {
@@ -52,27 +58,22 @@ async def generate_description(request: ProductRequest):
             "timestamp": datetime.now().isoformat()
         }
 
-    # Ensure the descriptions file exists and is loaded correctly
-    logger.info(f"Ensuring {descriptions_file} exists")
-    if not os.path.exists(descriptions_file):
-        with open(descriptions_file, 'w') as f:
-            json.dump({}, f)
-        logger.info("Created product_descriptions.json inside request handler")
+    # Log the generated description
+    logger.info(f"Final generated description for {request.product_name}: {description}")
 
-    logger.info(f"Loading {descriptions_file}")
-    with open(descriptions_file, 'r') as f:
-        try:
+    # Load existing descriptions
+    try:
+        with open(descriptions_file, 'r') as f:
             descriptions = json.load(f)
             logger.info("Loaded existing descriptions")
-        except json.JSONDecodeError:
-            descriptions = {}
-            logger.error("Failed to decode JSON from product_descriptions.json")
+    except json.JSONDecodeError:
+        descriptions = {}
+        logger.error("Failed to decode JSON from product_descriptions.json")
 
     # Update descriptions with the new result
     descriptions[request.product_name] = result
 
     # Write back to the JSON file
-    logger.info(f"Writing to {descriptions_file}")
     with open(descriptions_file, 'w') as f:
         json.dump(descriptions, f, indent=4)
         logger.info(f"Updated product_descriptions.json with {request.product_name}")
@@ -93,7 +94,7 @@ async def get_descriptions():
 async def get_description(product_name: str):
     with open(descriptions_file, 'r') as f:
         descriptions = json.load(f)
-    
+
     if product_name in descriptions:
         return descriptions[product_name]
     else:
