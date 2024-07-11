@@ -65,16 +65,9 @@ Ensure you have the following installed:
 
 ## Usage
 
-### Running the Server
+### Start The Server and Generating Descriptions
 
-To start the FastAPI server:
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-### Generating Descriptions
-
-Use the trigger_requests.py script to start the server and generate product descriptions:
+Use the app_initializer.py script to start the server and generate product descriptions:
 
 ```bash
 python app_initializer.py
@@ -107,13 +100,6 @@ curl http://localhost:8000/health
 └── README.md
 ```
 
-
-### Running Tests
-To run tests (assuming you have test scripts):
-
-```bash
-pytest
-```
 
 ## Contributing
 Contributions are welcome! Please fork the repository and use a feature branch. Pull requests are reviewed actively.
